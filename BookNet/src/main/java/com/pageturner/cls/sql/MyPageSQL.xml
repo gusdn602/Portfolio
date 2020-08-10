@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+					"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+	이 파일은 마이페이지에서 보여줄 데이터를 데이터베이스에서 꺼내오는 질의명령을
+	담고 있는 파일이다.
+	작성자	: 박기윤
+	작성일	: 2020.06.25
+	버전	: v.1.0
+-->
+<mapper namespace="mpSQL">
+	<!-- 회원 id로 회원번호를 조회하는 질의명령 -->
+	<select id="getMno" parameterType="mVO" resultType="int">
+		SELECT
+			mno
+		FROM
+			membertab
+		WHERE
+			id = #{id}
+	</select>
+	
+	<!-- 회원번호로 회원 상세 정보를 조회하는 질의명령 -->
+	<select id="getMembInfo" parameterType="mVO" resultType="mVO">
+		SELECT
+		    id, DECODE(gen, 'M', '남성', 'F', '여성') gen, birthdate, interest,
+		    describe, intershow, birthshow, genshow, isinflu, save_loc, mt.mno, save_name
+		FROM
+		    membertab mt, profilepictab pt
+		WHERE
+		    mt.mno = pt.mno(+)
+		    AND mt.mno = #{mno}
+		    AND pt.isshow = 'Y'
+	</select>
+	
+	<!-- 작성한 게시글 갯수 조회하는 질의명령 -->
+	<select id="cntPost" parameterType="mVO" resultType="int">
+		SELECT
+			COUNT(*) cnt
+		FROM
+			poststab
+		WHERE
+			mno = ${mno}
+			AND isshow = 'Y'
+	</select>
+	
+	<!-- 회원과 관련된 게시글을 조회하는 질의명령 -->
+	<select id="getPost" parameterType="pVO" resultType="pVO">
+		SELECT
+		    pt.pno, postcont, postdate pdate, linkno,
+		    (substr(bname, 1, 10) || '...') bname,
+		    writer, gname, smallimg, id, ischeck, mt.mno
+		FROM
+		    poststab pt, liketab lt, booktab bt, membertab mt, genretab gt
+		where
+		    pt.pno = lt.pno
+		    AND pt.bno = bt.bno
+		    AND bt.genre = gt.genre
+		    AND pt.mno = mt.mno
+		    AND pt.isshow = 'Y'
+		    AND mt.isshow = 'Y'
+		    <choose>
+		    	<when test="likepost eq 'YES'">
+		    		AND lt.mno = ${mno}
+		    		AND lt.ischeck = 'Y'
+		    	</when>
+		    	<otherwise>
+				    AND pt.mno = ${mno}
+		    	</otherwise>
+		    </choose>
+		ORDER BY
+		    postdate DESC
+	</select>
+</mapper>

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+					"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 
+	이 파일은 출판사, 책, 추천도서에 관한 데이터베이스 작업을 할 질의명령을 담은 파일이다.
+	작성자	: 박기윤
+	작성일	: 2020.06.28
+	버전	: v.1.0
+ -->
+<mapper namespace="bookSQL">
+	<select id="pbCk" parameterType="bVO" resultType="int">
+		SELECT
+		    COUNT(*) cnt
+		FROM
+		    publishtab
+		WHERE
+		    publish = #{publish}
+	</select>
+	
+	<select id="bookCk" parameterType="bVO" resultType="int">
+		SELECT
+		    COUNT(*) cnt
+		FROM
+		    booktab
+		WHERE
+		    isbn = #{isbn}
+	</select>
+	
+	<insert id="addPb" parameterType="bVO">
+		<selectKey keyProperty="publish_no" resultType="int" order="BEFORE">
+			SELECT
+				NVL(MAX(publish_no) + 1, 1)
+			FROM
+				publishtab
+		</selectKey>
+		INSERT INTO
+			publishtab(publish_no, publish)
+		VALUES(
+			${publish_no}, #{publish}
+		)
+	</insert>
+	
+	<insert id="addBook" parameterType="bVO">
+		<selectKey keyProperty="bno,publish_no"
+					resultType="bVO" order="BEFORE">
+			SELECT
+				NVL(MAX(bno) + 1, 1) bno,
+				publishtab.publish_no
+			FROM
+				booktab, publishtab
+			WHERE
+				publishtab.publish = #{publish}
+			GROUP BY
+				publishtab.publish_no
+		</selectKey>
+		INSERT INTO
+			booktab(bno, bname, genre, smallimg, largeimg,
+					writer, trans, isbn, publish_no)
+		VALUES(
+			${bno}, #{bname}, ${genre}, #{smallimg},
+			#{largeimg}, #{writer}, #{trans},
+			#{isbn}, ${publish_no}
+		)
+	</insert>
+	
+	<select id="selGenreList" resultType="int">
+		SELECT
+			genre
+		FROM
+			genretab
+	</select>
+</mapper>
